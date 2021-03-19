@@ -1,0 +1,65 @@
+"""Struct that holds the quantised array as UInts with an additional
+field for the min, max of the original range."""
+struct LinQuantArray{T,N} <: AbstractArray{Unsigned,N}
+    A::Array{T,N}       # array of UInts
+    min::Float64        # offset min, max
+    max::Float64
+end
+
+Base.size(QA::LinQuantArray) = size(QA.A)
+Base.getindex(QA::LinQuantArray,i...) = getindex(QA.A,i...)
+Base.eltype(Q::LinQuantArray{T,N}) where {T,N} = T
+
+"""Quantise an array linearly into a LinQuantArray."""
+function LinQuantization(::Type{T},A::AbstractArray) where {T<:Unsigned}
+    all(isfinite.(A)) || throw(DomainError("Linear quantization only in (-∞,∞)"))
+
+    Amin = Float64(minimum(A))              # minimum of value range
+    Amax = Float64(maximum(A))              # maximum of value range
+    Δ = (2^(sizeof(T)*8)-1)/(Amax-Amin)     # inverse spacing
+
+    Q = similar(A,T)                        # preallocate
+
+    # map minimum to 0x0, maximum to 0xff...ff
+    @inbounds for i in eachindex(Q)
+        Q[i] = round((A[i]-Amin)*Δ)
+    end
+
+    # @. @views Q = T(round((A-Amin)*Δ))
+
+    return LinQuantArray{T,ndims(Q)}(Q,Amin,Amax)
+end
+
+# define 8, 16, 24 and 32 bit
+LinQuant8Array(A::AbstractArray{T,N}) where {T,N} = LinQuantization(UInt8,A)
+LinQuant16Array(A::AbstractArray{T,N}) where {T,N} = LinQuantization(UInt16,A)
+LinQuant24Array(A::AbstractArray{T,N}) where {T,N} = LinQuantization(UInt24,A)
+LinQuant32Array(A::AbstractArray{T,N}) where {T,N} = LinQuantization(UInt32,A)
+
+"""De-quantise a LinQuantArray into floats."""
+function Base.Array{T}(n::Integer,Q::LinQuantArray) where {T<:AbstractFloat}
+    Qmin = Q.min                # min as Float64
+    Qmax = Q.max                # max as Float64
+    Δ = (Qmax-Qmin)/(2^n-1)     # linear spacing
+
+    A = similar(Q,T)
+
+    @inbounds for i in eachindex(A)
+        # convert Q[i]::UInt to Float64 via *
+        # then to T through =
+        A[i] = Qmin + Q[i]*Δ
+    end
+
+    return A
+end
+
+# define default conversions for 8, 16, 24 and 32 bit
+Base.Array{T}(Q::LinQuantArray{UInt8,N}) where {T,N} = Array{T}(8,Q)
+Base.Array{T}(Q::LinQuantArray{UInt16,N}) where {T,N} = Array{T}(16,Q)
+Base.Array{T}(Q::LinQuantArray{UInt24,N}) where {T,N} = Array{T}(24,Q)
+Base.Array{T}(Q::LinQuantArray{UInt32,N}) where {T,N} = Array{T}(32,Q)
+
+Base.Array(Q::LinQuantArray{UInt8,N}) where N = Array{Float32}(8,Q)
+Base.Array(Q::LinQuantArray{UInt16,N}) where N = Array{Float32}(16,Q)
+Base.Array(Q::LinQuantArray{UInt24,N}) where N = Array{Float32}(24,Q)
+Base.Array(Q::LinQuantArray{UInt32,N}) where N = Array{Float64}(32,Q)
