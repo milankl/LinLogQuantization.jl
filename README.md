@@ -1,2 +1,2 @@
-# LinLogQuantisation.jl
-Linear and logarithmic quantisation for Julia arrays
+# LinLogQuantization.jl
+Linear and logarithmic quantization for Julia arrays
