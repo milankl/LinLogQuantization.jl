@@ -1,4 +1,5 @@
 # LinLogQuantization.jl
+[![CI](https://github.com/milankl/LinLogQuantization.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/milankl/LinLogQuantization.jl/actions/workflows/CI.yml)
 
 Linear and logarithmic quantisation for Julia arrays into 8, 16, 24 or 32-bit.
 Quantisation is a lossy compression method that divides the range of values in
@@ -184,11 +185,13 @@ element in the uncompressed array.
 Approximate throughputs are (via `@btime`)
 
 | Method               | 8 bit    | 16 bit    | 24 bit   |    32 bit|
-| :--------------------|---------:|----------:|-------- :|---------:|
-| Linear compression   | 1350 MB/s| 1350 MB/s | 50 MB/s  | 1350 MB/s|
-| Linear decompression | 4700 MB/s| 4700 MB/s | 4000 MB/s| 3600 MB/s| 
-| Logarithmic compr    |  285 MB/s|   285 MB/s|   40 MB/s|  285 MB/s|
-| Logarithmic decompr  |  250 MB/s|   250 MB/s|  250 MB/s|  500 MB/s|
+| ---------------------|---------:|----------:|-------- :|---------:|
+| **Linear** |
+| compression   | 1350 MB/s| 1350 MB/s | 50 MB/s  | 1350 MB/s|
+| decompression | 4700 MB/s| 4700 MB/s | 4000 MB/s| 3600 MB/s| 
+| **Logarithmic** |
+| decompression  |  250 MB/s|   250 MB/s|  250 MB/s|  500 MB/s|
+| compression    |  285 MB/s|   285 MB/s|   40 MB/s|  285 MB/s|
 
 24-bit quantisation is via `UInt24` from the `BitIntegers` package,
 which introduces a drastic slow-down.
