@@ -185,7 +185,7 @@ element in the uncompressed array.
 Approximate throughputs are (via `@btime`)
 
 | Method               | 8 bit    | 16 bit    | 24 bit   |    32 bit|
-| ---------------------|---------:|----------:|-------- :|---------:|
+| -------------------- | -------: | --------: | -------: | -------: |
 | **Linear** |
 | compression   | 1350 MB/s| 1350 MB/s | 50 MB/s  | 1350 MB/s|
 | decompression | 4700 MB/s| 4700 MB/s | 4000 MB/s| 3600 MB/s| 
