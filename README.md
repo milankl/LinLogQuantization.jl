@@ -154,7 +154,7 @@ c_b + log_b(1+(b-1)/2) = 0.5
 So, for `b=2` we have `c_b = 0.5 - log2(1.5) ≈ -0.085`. Hence, a small number will
 be subtracted before rounding is applied to reduce the away-from-zero bias.
 
-![](https://github.com/milankl/LinLogQuantization.jl/blob/master/figs/round_logquant.png)
+![](https://github.com/milankl/LinLogQuantization.jl/blob/main/figs/round_logquant.png)
 
 **Figure A1.** Schematic to illustrate round-to-nearest in linear vs logarithmic
 space for logarithmic number systems.
@@ -184,14 +184,14 @@ element in the uncompressed array.
 
 Approximate throughputs are (via `@btime`)
 
-| Method               | 8 bit    | 16 bit    | 24 bit   |    32 bit|
-| -------------------- | -------: | --------: | -------: | -------: |
+| Method           | 8 bit    | 16 bit    | 24 bit   |    32 bit|
+| ---------------- | -------: | --------: | -------: | -------: |
 | **Linear** |
-| compression   | 1350 MB/s| 1350 MB/s | 50 MB/s  | 1350 MB/s|
-| decompression | 4700 MB/s| 4700 MB/s | 4000 MB/s| 3600 MB/s| 
-| **Logarithmic** |
-| decompression  |  250 MB/s|   250 MB/s|  250 MB/s|  500 MB/s|
-| compression    |  285 MB/s|   285 MB/s|   40 MB/s|  285 MB/s|
+| compression      | 1350 MB/s| 1350 MB/s | 50 MB/s  | 1350 MB/s|
+| decompression    | 4700 MB/s| 4700 MB/s | 4000 MB/s| 3600 MB/s| 
+| **Logarithmic**  |
+| compression      |  285 MB/s|   285 MB/s|   40 MB/s|  285 MB/s|
+| decompression    |  250 MB/s|   250 MB/s|  250 MB/s|  500 MB/s|
 
 24-bit quantisation is via `UInt24` from the `BitIntegers` package,
 which introduces a drastic slow-down.
