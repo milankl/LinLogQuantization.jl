@@ -25,8 +25,6 @@ function LinQuantization(::Type{T},A::AbstractArray) where {T<:Unsigned}
         Q[i] = round((A[i]-Amin)*Δ)
     end
 
-    # @. @views Q = T(round((A-Amin)*Δ))
-
     return LinQuantArray{T,ndims(Q)}(Q,Amin,Amax)
 end
 
@@ -63,3 +61,40 @@ Base.Array(Q::LinQuantArray{UInt8,N}) where N = Array{Float32}(8,Q)
 Base.Array(Q::LinQuantArray{UInt16,N}) where N = Array{Float32}(16,Q)
 Base.Array(Q::LinQuantArray{UInt24,N}) where N = Array{Float32}(24,Q)
 Base.Array(Q::LinQuantArray{UInt32,N}) where N = Array{Float64}(32,Q)
+
+# one quantization per layer
+"""Linear quantization independently for every element along dimension
+dim in array A. Returns a Vector{LinQuantArray}."""
+function LinQuantArray(::Type{TUInt},A::AbstractArray{T,N},dim::Int) where {TUInt,T,N}
+    @assert dim <= N   "Can't quantize a $N-dimensional array in dim=$dim"
+    n = size(A)[dim]
+    L = Vector{LinQuantArray}(undef,n)
+    t = [if j == dim 1 else Colon() end for j in 1:N]
+    for i in 1:n
+        t[dim] = i
+        L[i] = LinQuantization(TUInt,A[t...])    
+    end
+    return L
+end
+
+# for 8,16,24 and 32 bit
+LinQuant8Array(A::AbstractArray{T,N},dim::Int) where {T,N} = LinQuantArray(UInt8,A,dim)
+LinQuant16Array(A::AbstractArray{T,N},dim::Int) where {T,N} = LinQuantArray(UInt16,A,dim)
+LinQuant24Array(A::AbstractArray{T,N},dim::Int) where {T,N} = LinQuantArray(UInt24,A,dim)
+LinQuant32Array(A::AbstractArray{T,N},dim::Int) where {T,N} = LinQuantArray(UInt32,A,dim)
+
+"""Undo the linear quantisation independently along one dimension, and returns
+an array whereby the dimension always comes last. Hence, might be permuted compared
+to the uncompressed array."""
+function Base.Array{T}(L::Vector{LinQuantArray}) where T
+    N = ndims(L[1])
+    n = length(L)
+    s = size(L[1])
+    t = axes(L[1])
+    A = Array{T,N+1}(undef,s...,length(L))
+    for i in 1:n
+        A[t...,i] = Array{T}(L[i])
+    end
+    return A
+end
+
