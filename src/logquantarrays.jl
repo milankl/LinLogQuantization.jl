@@ -92,3 +92,39 @@ Base.Array(Q::LogQuantArray{UInt8,N}) where N = Array{Float32}(8,Q)
 Base.Array(Q::LogQuantArray{UInt16,N}) where N = Array{Float32}(16,Q)
 Base.Array(Q::LogQuantArray{UInt24,N}) where N = Array{Float32}(24,Q)
 Base.Array(Q::LogQuantArray{UInt32,N}) where N = Array{Float64}(32,Q)
+
+# one quantization per layer
+"""Logarithmic quantization independently for every element along dimension
+dim in array A. Returns a Vector{LogQuantArray}."""
+function LogQuantArray(::Type{TUInt},A::AbstractArray{T,N},dim::Int) where {TUInt,T,N}
+    @assert dim <= N   "Can't quantize a $N-dimensional array in dim=$dim"
+    n = size(A)[dim]
+    L = Vector{LogQuantArray}(undef,n)
+    t = [if j == dim 1 else Colon() end for j in 1:N]
+    for i in 1:n
+        t[dim] = i
+        L[i] = LogQuantization(TUInt,A[t...])    
+    end
+    return L
+end
+
+# for 8,16,24 and 32 bit
+LogQuant8Array(A::AbstractArray{T,N};dim::Int) where {T,N} = LogQuantArray(UInt8,A,dim)
+LogQuant16Array(A::AbstractArray{T,N};dim::Int) where {T,N} = LogQuantArray(UInt16,A,dim)
+LogQuant24Array(A::AbstractArray{T,N};dim::Int) where {T,N} = LogQuantArray(UInt24,A,dim)
+LogQuant32Array(A::AbstractArray{T,N};dim::Int) where {T,N} = LogQuantArray(UInt32,A,dim)
+
+"""Undo the logarithmic quantisation independently along one dimension, and returns
+an array whereby the dimension always comes last. Hence, might be permuted compared
+to the uncompressed array."""
+function Base.Array{T}(L::Vector{LogQuantArray}) where T
+    N = ndims(L[1])
+    n = length(L)
+    s = size(L[1])
+    t = axes(L[1])
+    A = Array{T,N+1}(undef,s...,length(L))
+    for i in 1:n
+        A[t...,i] = Array{T}(L[i])
+    end
+    return A
+end
