@@ -109,10 +109,10 @@ function LogQuantArray(::Type{TUInt},A::AbstractArray{T,N},dim::Int) where {TUIn
 end
 
 # for 8,16,24 and 32 bit
-LogQuant8Array(A::AbstractArray{T,N};dim::Int) where {T,N} = LogQuantArray(UInt8,A,dim)
-LogQuant16Array(A::AbstractArray{T,N};dim::Int) where {T,N} = LogQuantArray(UInt16,A,dim)
-LogQuant24Array(A::AbstractArray{T,N};dim::Int) where {T,N} = LogQuantArray(UInt24,A,dim)
-LogQuant32Array(A::AbstractArray{T,N};dim::Int) where {T,N} = LogQuantArray(UInt32,A,dim)
+LogQuant8Array(A::AbstractArray{T,N},dim::Int) where {T,N} = LogQuantArray(UInt8,A,dim)
+LogQuant16Array(A::AbstractArray{T,N},dim::Int) where {T,N} = LogQuantArray(UInt16,A,dim)
+LogQuant24Array(A::AbstractArray{T,N},dim::Int) where {T,N} = LogQuantArray(UInt24,A,dim)
+LogQuant32Array(A::AbstractArray{T,N},dim::Int) where {T,N} = LogQuantArray(UInt32,A,dim)
 
 """Undo the logarithmic quantisation independently along one dimension, and returns
 an array whereby the dimension always comes last. Hence, might be permuted compared

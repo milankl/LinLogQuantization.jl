@@ -78,10 +78,10 @@ function LinQuantArray(::Type{TUInt},A::AbstractArray{T,N},dim::Int) where {TUIn
 end
 
 # for 8,16,24 and 32 bit
-LinQuant8Array(A::AbstractArray{T,N};dim::Int) where {T,N} = LinQuantArray(UInt8,A,dim)
-LinQuant16Array(A::AbstractArray{T,N};dim::Int) where {T,N} = LinQuantArray(UInt16,A,dim)
-LinQuant24Array(A::AbstractArray{T,N};dim::Int) where {T,N} = LinQuantArray(UInt24,A,dim)
-LinQuant32Array(A::AbstractArray{T,N};dim::Int) where {T,N} = LinQuantArray(UInt32,A,dim)
+LinQuant8Array(A::AbstractArray{T,N},dim::Int) where {T,N} = LinQuantArray(UInt8,A,dim)
+LinQuant16Array(A::AbstractArray{T,N},dim::Int) where {T,N} = LinQuantArray(UInt16,A,dim)
+LinQuant24Array(A::AbstractArray{T,N},dim::Int) where {T,N} = LinQuantArray(UInt24,A,dim)
+LinQuant32Array(A::AbstractArray{T,N},dim::Int) where {T,N} = LinQuantArray(UInt32,A,dim)
 
 """Undo the linear quantisation independently along one dimension, and returns
 an array whereby the dimension always comes last. Hence, might be permuted compared
