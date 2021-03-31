@@ -198,8 +198,8 @@ which introduces a drastic slow-down.
 
 ## Installation
 
-Open the package manager via `]` then
+LinLogQuantization.jl is registered, so just do
 ```julia
-julia> add https://github.com/milankl/LinLogQuantization.jl
+julia>] add LinLogQuantization
 ```
-The package is not yet registered in the Julia registry.
+where `]` opens the package manager
