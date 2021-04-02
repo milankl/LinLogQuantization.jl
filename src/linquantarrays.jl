@@ -16,7 +16,12 @@ function LinQuantization(::Type{T},A::AbstractArray) where {T<:Unsigned}
 
     Amin = Float64(minimum(A))              # minimum of value range
     Amax = Float64(maximum(A))              # maximum of value range
-    Δ = (2^(sizeof(T)*8)-1)/(Amax-Amin)     # inverse spacing
+
+    if Amin == Amax
+        Δ = 0.0                                 # set to zero for no range
+    else
+        Δ = (2^(sizeof(T)*8)-1)/(Amax-Amin)     # inverse spacing
+    end
 
     Q = similar(A,T)                        # preallocate
 
