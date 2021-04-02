@@ -14,6 +14,8 @@ Base.eltype(Q::LogQuantArray{T,N}) where {T,N} = T
 function minpos(A::AbstractArray{T}) where T
     o = zero(T)
     mi = foldl((x,y) -> y > o ? min(x,y) : x, A; init=typemax(T))
+    mi == typemax(T) && return o
+    return mi
 end
 
 """Quantize elements of an array logarithmically into UInts with
@@ -31,19 +33,22 @@ function LogQuantization(   ::Type{T},
     logmax = log(Float64(maximum(A)))
 
     # throw error in case the range is zero.
-    logmin == logmax && throw(DomainError("Data range is zero."))
-
-    # inverse log spacing
-    # map min to 1 and max to ff..., reserve 0 for 0.
-    Δ = (2^(sizeof(T)*8)-2)/(logmax-logmin)
-
-    # shift to round-to-nearest in lin or log-space
-    if round_nearest_in == :linspace
-        c = 1/2 - Δ*log(mi*(exp(1/Δ)+1)/2)
-    elseif round_nearest_in == :logspace
-        c = -logmin*Δ
+    if logmin == logmax
+        Δ = 0.0
+        c = 0.0
     else
-        throw(ArgumentError("Round-to-nearest either :linspace or :logspace"))
+        # inverse log spacing
+        # map min to 1 and max to ff..., reserve 0 for 0.
+        Δ = (2^(sizeof(T)*8)-2)/(logmax-logmin)
+    
+        # shift to round-to-nearest in lin or log-space
+        if round_nearest_in == :linspace
+            c = 1/2 - Δ*log(mi*(exp(1/Δ)+1)/2)
+        elseif round_nearest_in == :logspace
+            c = -logmin*Δ
+        else
+            throw(ArgumentError("Round-to-nearest either :linspace or :logspace"))
+        end
     end
 
     # preallocate output
