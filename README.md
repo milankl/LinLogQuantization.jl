@@ -78,7 +78,7 @@ Amax = maximum(A)
 which allows the calculation of `Δ`, the inverse of the spacing between two
 quantums
 ```julia
-Δ = 2^(n-1)/(Amax-Amin)
+Δ = (2^n-1)/(Amax-Amin)
 ```
 where `n` is the number of bits used for quantisation. For every
 element `a` in `A` the corresponding quantum `q` which is closest in linear space
@@ -105,7 +105,7 @@ Alogmax = log(maximum(A))
 where zeros are ignored in the `minpos` function, which instead returns the smallest
 positive value. The inverse spacing `Δ` is then
 ```julia
-Δ = 2^(n-2)/(logmax-logmin)
+Δ = (2^n-2)/(logmax-logmin)
 ```
 Note, that only `2^(n-1)` (and not 2^n as for linear quantisation) bitpatterns
 are used to resolve the range between minimum and maximum, as we want to reserve
