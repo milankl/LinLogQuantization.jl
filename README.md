@@ -107,7 +107,7 @@ positive value. The inverse spacing `Δ` is then
 ```julia
 Δ = (2^n-2)/(logmax-logmin)
 ```
-Note, that only `2^(n-1)` (and not 2^n as for linear quantisation) bitpatterns
+Note, that only `2^n-1` (and not 2^n as for linear quantisation) bitpatterns
 are used to resolve the range between minimum and maximum, as we want to reserve
 the bitpattern `0x000000` for zero. The corresponding quantum `q` for `a`
 `A` is then
