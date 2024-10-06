@@ -1,5 +1,5 @@
 
-const Maybe{T} = Union{T,Nothing}
+const Option{T} = Union{T,Nothing}
 
 """Struct that holds the quantised array as UInts with an additional
 field for the min, max of the original range."""
@@ -89,16 +89,16 @@ LinQuant24Array(A::AbstractArray{T,N}) where {T,N} = LinQuantization(UInt24,A)
 LinQuant32Array(A::AbstractArray{T,N}) where {T,N} = LinQuantization(UInt32,A)
 
 # define for unsigned integers of  8, 16, 24 and 32 bit 
-LinQuantUInt8Array(A::AbstractArray{T,N}, e::Maybe{Tuple}) where {T,N} = LinQuantization(UInt8,A,e)
-LinQuantUInt16Array(A::AbstractArray{T,N}, e::Maybe{Tuple}) where {T,N} = LinQuantization(UInt16,A,e)
-LinQuantUInt24Array(A::AbstractArray{T,N}, e::Maybe{Tuple}) where {T,N} = LinQuantization(UInt24,A,e)
-LinQuantUInt32Array(A::AbstractArray{T,N}, e::Maybe{Tuple}) where {T,N} = LinQuantization(UInt32,A,e)
+LinQuantUInt8Array(A::AbstractArray{T,N}, e::Option{Tuple}) where {T,N} = LinQuantization(UInt8,A,e)
+LinQuantUInt16Array(A::AbstractArray{T,N}, e::Option{Tuple}) where {T,N} = LinQuantization(UInt16,A,e)
+LinQuantUInt24Array(A::AbstractArray{T,N}, e::Option{Tuple}) where {T,N} = LinQuantization(UInt24,A,e)
+LinQuantUInt32Array(A::AbstractArray{T,N}, e::Option{Tuple}) where {T,N} = LinQuantization(UInt32,A,e)
 
 # define for signed integers of  8, 16, 24 and 32 bit
-LinQuantInt8Array(A::AbstractArray{T,N}, e::Maybe{Tuple}) where {T,N} = LinQuantization(Int8,A,e)
-LinQuantInt16Array(A::AbstractArray{T,N}, e::Maybe{Tuple}) where {T,N} = LinQuantization(Int16,A,e)
-LinQuantInt24Array(A::AbstractArray{T,N}, e::Maybe{Tuple}) where {T,N} = LinQuantization(Int24,A,e)
-LinQuantInt32Array(A::AbstractArray{T,N}, e::Maybe{Tuple}) where {T,N} = LinQuantization(Int32,A,e)
+LinQuantInt8Array(A::AbstractArray{T,N}, e::Option{Tuple}) where {T,N} = LinQuantization(Int8,A,e)
+LinQuantInt16Array(A::AbstractArray{T,N}, e::Option{Tuple}) where {T,N} = LinQuantization(Int16,A,e)
+LinQuantInt24Array(A::AbstractArray{T,N}, e::Option{Tuple}) where {T,N} = LinQuantization(Int24,A,e)
+LinQuantInt32Array(A::AbstractArray{T,N}, e::Option{Tuple}) where {T,N} = LinQuantization(Int32,A,e)
 
 
 """De-quantise a LinQuantArray into floats."""
@@ -139,7 +139,7 @@ function LinQuantArray(
     ::Type{TInteger},
     A::AbstractArray{T,N},
     dim::Int,
-    extrema::Maybe{Tuple} = nothing
+    extrema::Option{Tuple} = nothing
 ) where {TInteger,T,N}
     @assert dim <= N   "Can't quantize a $N-dimensional array in dim=$dim"
     n = size(A)[dim]
@@ -159,16 +159,16 @@ LinQuant24Array(A::AbstractArray{T,N},dim::Int) where {T,N} = LinQuantArray(UInt
 LinQuant32Array(A::AbstractArray{T,N},dim::Int) where {T,N} = LinQuantArray(UInt32,A,dim)
 
 # for unsigned integers  8,16,24 and 32 bit
-LinQuantUInt8Array(A::AbstractArray{T,N},dim::Int,e::Maybe{Tuple}) where {T,N} = LinQuantArray(UInt8,A,dim,e)
-LinQuantUInt16Array(A::AbstractArray{T,N},dim::Int,e::Maybe{Tuple}) where {T,N} = LinQuantArray(UInt16,A,dim,e)
-LinQuantUInt24Array(A::AbstractArray{T,N},dim::Int,e::Maybe{Tuple}) where {T,N} = LinQuantArray(UInt24,A,dim,e)
-LinQuantUInt32Array(A::AbstractArray{T,N},dim::Int,e::Maybe{Tuple}) where {T,N} = LinQuantArray(UInt32,A,dim,e)
+LinQuantUInt8Array(A::AbstractArray{T,N},dim::Int,e::Option{Tuple}) where {T,N} = LinQuantArray(UInt8,A,dim,e)
+LinQuantUInt16Array(A::AbstractArray{T,N},dim::Int,e::Option{Tuple}) where {T,N} = LinQuantArray(UInt16,A,dim,e)
+LinQuantUInt24Array(A::AbstractArray{T,N},dim::Int,e::Option{Tuple}) where {T,N} = LinQuantArray(UInt24,A,dim,e)
+LinQuantUInt32Array(A::AbstractArray{T,N},dim::Int,e::Option{Tuple}) where {T,N} = LinQuantArray(UInt32,A,dim,e)
 
 # for signed integers of 8,16,24 and 32 bit
-LinQuantInt8Array(A::AbstractArray{T,N},dim::Int,e::Maybe{Tuple}) where {T,N} = LinQuantArray(Int8,A,dim,e)
-LinQuantInt16Array(A::AbstractArray{T,N},dim::Int,e::Maybe{Tuple}) where {T,N} = LinQuantArray(Int16,A,dim,e)
-LinQuantInt24Array(A::AbstractArray{T,N},dim::Int,e::Maybe{Tuple}) where {T,N} = LinQuantArray(Int24,A,dim,e)
-LinQuantInt32Array(A::AbstractArray{T,N},dim::Int,e::Maybe{Tuple}) where {T,N} = LinQuantArray(Int32,A,dim,e)
+LinQuantInt8Array(A::AbstractArray{T,N},dim::Int,e::Option{Tuple}) where {T,N} = LinQuantArray(Int8,A,dim,e)
+LinQuantInt16Array(A::AbstractArray{T,N},dim::Int,e::Option{Tuple}) where {T,N} = LinQuantArray(Int16,A,dim,e)
+LinQuantInt24Array(A::AbstractArray{T,N},dim::Int,e::Option{Tuple}) where {T,N} = LinQuantArray(Int24,A,dim,e)
+LinQuantInt32Array(A::AbstractArray{T,N},dim::Int,e::Option{Tuple}) where {T,N} = LinQuantArray(Int32,A,dim,e)
 
 
 """Undo the linear quantisation independently along one dimension, and returns
