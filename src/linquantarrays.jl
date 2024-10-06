@@ -105,8 +105,8 @@ LinQuantInt32Array(A::AbstractArray{T,N}, e::Option{Tuple}) where {T,N} = LinQua
 function Base.Array{U}(n::Integer, Q::LinQuantArray) where {U<:AbstractFloat}
     Qmin = Q.min                     # min of original Array as Float64
     Qmax = Q.max                     # max of original Array as Float64
-    Tmin = Float64(typemin(Q.A[1]))  # min representable in type as Float64
-    Tmax = Float64(typemax(Q.A[1]))  # max representable in type as Float64
+    Tmin = Float64(typemin(eltype(Q)))  # min representable in type as Float64
+    Tmax = Float64(typemax(eltype(Q)))  # max representable in type as Float64
     Δ = (Qmax-Qmin)/(Tmax-Tmin)          # linear spacing
 
     A = similar(Q,U)
