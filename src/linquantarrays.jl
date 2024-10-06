@@ -42,13 +42,13 @@ function LinQuantization(
     Tmin, Tmax = Float64(typemin(T)), Float64(typemax(T))
 
     # inverse spacing, set to zero for no range
-    α⁻¹ = Amin == Amax ? zero(Float64) : (Tmax-Tmin)/(Amax-Amin)
+    Δ⁻¹ = Amin == Amax ? zero(Float64) : (Tmax-Tmin)/(Amax-Amin)
 
     Q = similar(A,T)                        # preallocate
 
     # map minimum to typemin(T), maximum to typemax(t)
     @inbounds for i in eachindex(Q)
-        Q[i] = round((A[i]-Amin)*α⁻¹ + Tmin)
+        Q[i] = round((A[i]-Amin)*Δ⁻¹ + Tmin)
     end
 
     return LinQuantArray{T,ndims(Q)}(Q,Amin,Amax)
@@ -68,7 +68,7 @@ function LinQuantization(
     Tmin, Tmax = Float64(typemin(T)), Float64(typemax(T))
 
     # inverse spacing, set to zero for no range
-    α⁻¹ = Amin == Amax ? zero(Float64) : (Tmax-Tmin)/(Amax-Amin)
+    Δ⁻¹ = Amin == Amax ? zero(Float64) : (Tmax-Tmin)/(Amax-Amin)
     
     # preallocate
     Q = similar(A, T)                        
@@ -76,13 +76,13 @@ function LinQuantization(
     # map minimum to typemin(T), maximum to typemax(t)
     # clamp to [Amin,Amax] removing out-of-range values
     @inbounds for i in eachindex(Q)
-        Q[i] = round(T, (clamp(A[i], Amin, Amax) - Amin)*α⁻¹ + Tmin)
+        Q[i] = round(T, clamp((A[i]-Amin)*Δ⁻¹ + Tmin, Tmin, Tmax))
     end
 
     return LinQuantArray{T,ndims(Q)}(Q,Amin,Amax)
 end
 
-# keep compatibility with previous version
+# define for unsigned integers of  8, 16, 24 and 32 bit 
 LinQuant8Array(A::AbstractArray{T,N}) where {T,N} = LinQuantization(UInt8,A)
 LinQuant16Array(A::AbstractArray{T,N}) where {T,N} = LinQuantization(UInt16,A)
 LinQuant24Array(A::AbstractArray{T,N}) where {T,N} = LinQuantization(UInt24,A)
@@ -107,14 +107,14 @@ function Base.Array{U}(n::Integer, Q::LinQuantArray) where {U<:AbstractFloat}
     Qmax = Q.max                     # max of original Array as Float64
     Tmin = Float64(typemin(Q.A[1]))  # min representable in type as Float64
     Tmax = Float64(typemax(Q.A[1]))  # max representable in type as Float64
-    α = (Qmax-Qmin)/(Tmax-Tmin)          # linear spacing
+    Δ = (Qmax-Qmin)/(Tmax-Tmin)          # linear spacing
 
     A = similar(Q,U)
 
     @inbounds for i in eachindex(A)
         # convert Q[i]::Integer to Float64 via *
         # then to T through =
-        A[i] = Qmin + (Q[i] - Tmin)*α
+        A[i] = Qmin + (Q[i] - Tmin)*Δ
     end
 
     return A
@@ -152,7 +152,7 @@ function LinQuantArray(
     return L
 end
 
-# keep compatibility with previous version
+# for unsigned integers  8,16,24 and 32 bit
 LinQuant8Array(A::AbstractArray{T,N},dim::Int) where {T,N} = LinQuantArray(UInt8,A,dim)
 LinQuant16Array(A::AbstractArray{T,N},dim::Int) where {T,N} = LinQuantArray(UInt16,A,dim)
 LinQuant24Array(A::AbstractArray{T,N},dim::Int) where {T,N} = LinQuantArray(UInt24,A,dim)
