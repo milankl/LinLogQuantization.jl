@@ -31,12 +31,13 @@ Quantise an array linearly into a LinQuantArray.
 function LinQuantization(
     ::Type{T},
     A::AbstractArray,
-    extrema::Nothing
+    extrema::Nothing=nothing
 ) where {T<:Integer}
-    all(isfinite.(A)) || throw(DomainError("Linear quantization only in (-∞,∞)"))
-
     # range of values in A
-    Amin, Amax  = Float64(minimum(A)), Float64(maximum(A))    
+    Amin, Amax  = Float64.(extrema(A))
+
+    # guard against infinite values
+    (isfinite(Amin) && isfinite(Amax)) || throw(DomainError("Linear quantization only in (-∞,∞)"))
 
     # minimum and maximum representable value of type T
     Tmin, Tmax = Float64(typemin(T)), Float64(typemax(T))
@@ -57,12 +58,13 @@ end
 function LinQuantization(
     ::Type{T},
     A::AbstractArray,
-    extrema::Tuple = extrema(A),
+    extrema::Tuple,
 ) where {T<:Integer}
-    all(isfinite.(A)) || throw(DomainError("Linear quantization only in (-∞,∞)"))
-
     # minimum-maximum range of values
     Amin, Amax = Float64.(extrema)    
+
+    # guard against infinite values
+    (isfinite(Amin) && isfinite(Amax)) || throw(DomainError("Linear quantization only in (-∞,∞)"))
     
     # minimum and maximum representable value of type T
     Tmin, Tmax = Float64(typemin(T)), Float64(typemax(T))
@@ -82,32 +84,23 @@ function LinQuantization(
     return LinQuantArray{T,ndims(Q)}(Q,Amin,Amax)
 end
 
-# define for unsigned integers of  8, 16, 24 and 32 bit 
+LinQuantArray{T}(A::AbstractArray{T,N},ext::Option{Tuple}=nothing) where {T,N} = LinQuantization(T,A,ext)
+
+# keep compatibility: shortcuts for unsigned integers of  8, 16, 24 and 32 bit 
 LinQuant8Array(A::AbstractArray{T,N}) where {T,N} = LinQuantization(UInt8,A)
 LinQuant16Array(A::AbstractArray{T,N}) where {T,N} = LinQuantization(UInt16,A)
 LinQuant24Array(A::AbstractArray{T,N}) where {T,N} = LinQuantization(UInt24,A)
 LinQuant32Array(A::AbstractArray{T,N}) where {T,N} = LinQuantization(UInt32,A)
 
-# define for unsigned integers of  8, 16, 24 and 32 bit 
-LinQuantUInt8Array(A::AbstractArray{T,N}, e::Option{Tuple}) where {T,N} = LinQuantization(UInt8,A,e)
-LinQuantUInt16Array(A::AbstractArray{T,N}, e::Option{Tuple}) where {T,N} = LinQuantization(UInt16,A,e)
-LinQuantUInt24Array(A::AbstractArray{T,N}, e::Option{Tuple}) where {T,N} = LinQuantization(UInt24,A,e)
-LinQuantUInt32Array(A::AbstractArray{T,N}, e::Option{Tuple}) where {T,N} = LinQuantization(UInt32,A,e)
-
-# define for signed integers of  8, 16, 24 and 32 bit
-LinQuantInt8Array(A::AbstractArray{T,N}, e::Option{Tuple}) where {T,N} = LinQuantization(Int8,A,e)
-LinQuantInt16Array(A::AbstractArray{T,N}, e::Option{Tuple}) where {T,N} = LinQuantization(Int16,A,e)
-LinQuantInt24Array(A::AbstractArray{T,N}, e::Option{Tuple}) where {T,N} = LinQuantization(Int24,A,e)
-LinQuantInt32Array(A::AbstractArray{T,N}, e::Option{Tuple}) where {T,N} = LinQuantization(Int32,A,e)
-
 
 """De-quantise a LinQuantArray into floats."""
-function Base.Array{U}(n::Integer, Q::LinQuantArray) where {U<:AbstractFloat}
+function Base.Array{U}(Q::LinQuantArray) where {U<:AbstractFloat}
     Qmin = Q.min                     # min of original Array as Float64
     Qmax = Q.max                     # max of original Array as Float64
-    Tmin = Float64(typemin(eltype(Q)))  # min representable in type as Float64
-    Tmax = Float64(typemax(eltype(Q)))  # max representable in type as Float64
-    Δ = (Qmax-Qmin)/(Tmax-Tmin)          # linear spacing
+    T = eltype(Q)
+    Tmin = Float64(typemin(T))       # min representable in type as Float64
+    Tmax = Float64(typemax(T))       # max representable in type as Float64
+    Δ = (Qmax-Qmin)/(Tmax-Tmin)      # linear spacing
 
     A = similar(Q,U)
 
@@ -121,16 +114,16 @@ function Base.Array{U}(n::Integer, Q::LinQuantArray) where {U<:AbstractFloat}
 end
 
 # define default conversions for unsigned 8, 16, 24 and 32 bit
-Base.Array{T}(Q::LinQuantArray{UInt8,N}) where {T,N} = Array{T}(8,Q)
-Base.Array{T}(Q::LinQuantArray{UInt16,N}) where {T,N} = Array{T}(16,Q)
-Base.Array{T}(Q::LinQuantArray{UInt24,N}) where {T,N} = Array{T}(24,Q)
-Base.Array{T}(Q::LinQuantArray{UInt32,N}) where {T,N} = Array{T}(32,Q)
+Base.Array{T}(Q::LinQuantArray{UInt8,N}) where {T,N} = Array{T}(Q)
+Base.Array{T}(Q::LinQuantArray{UInt16,N}) where {T,N} = Array{T}(Q)
+Base.Array{T}(Q::LinQuantArray{UInt24,N}) where {T,N} = Array{T}(Q)
+Base.Array{T}(Q::LinQuantArray{UInt32,N}) where {T,N} = Array{T}(Q)
 
 # define default conversions for signed 8, 16, 24 and 32 bit
-Base.Array(Q::LinQuantArray{Int8,N}) where N = Array{Float32}(8,Q)
-Base.Array(Q::LinQuantArray{Int16,N}) where N = Array{Float32}(16,Q)
-Base.Array(Q::LinQuantArray{Int24,N}) where N = Array{Float32}(24,Q)
-Base.Array(Q::LinQuantArray{Int32,N}) where N = Array{Float64}(32,Q)
+Base.Array(Q::LinQuantArray{Int8,N}) where N = Array{Float32}(Q)
+Base.Array(Q::LinQuantArray{Int16,N}) where N = Array{Float32}(Q)
+Base.Array(Q::LinQuantArray{Int24,N}) where N = Array{Float32}(Q)
+Base.Array(Q::LinQuantArray{Int32,N}) where N = Array{Float64}(Q)
 
 # one quantization per layer
 """Linear quantization independently for every element along dimension
@@ -138,7 +131,7 @@ dim in array A. Returns a Vector{LinQuantArray}."""
 function LinQuantArray(
     ::Type{TInteger},
     A::AbstractArray{T,N},
-    dim::Int,
+    dim::Int;
     extrema::Option{Tuple} = nothing
 ) where {TInteger,T,N}
     @assert dim <= N   "Can't quantize a $N-dimensional array in dim=$dim"
@@ -147,7 +140,7 @@ function LinQuantArray(
     t = [if j == dim 1 else Colon() end for j in 1:N]
     for i in 1:n
         t[dim] = i
-        L[i] = LinQuantization(TInteger,A[t...], extrema)    
+        L[i] = LinQuantization(TInteger,A[t...],extrema)    
     end
     return L
 end
@@ -158,18 +151,7 @@ LinQuant16Array(A::AbstractArray{T,N},dim::Int) where {T,N} = LinQuantArray(UInt
 LinQuant24Array(A::AbstractArray{T,N},dim::Int) where {T,N} = LinQuantArray(UInt24,A,dim)
 LinQuant32Array(A::AbstractArray{T,N},dim::Int) where {T,N} = LinQuantArray(UInt32,A,dim)
 
-# for unsigned integers  8,16,24 and 32 bit
-LinQuantUInt8Array(A::AbstractArray{T,N},dim::Int,e::Option{Tuple}) where {T,N} = LinQuantArray(UInt8,A,dim,e)
-LinQuantUInt16Array(A::AbstractArray{T,N},dim::Int,e::Option{Tuple}) where {T,N} = LinQuantArray(UInt16,A,dim,e)
-LinQuantUInt24Array(A::AbstractArray{T,N},dim::Int,e::Option{Tuple}) where {T,N} = LinQuantArray(UInt24,A,dim,e)
-LinQuantUInt32Array(A::AbstractArray{T,N},dim::Int,e::Option{Tuple}) where {T,N} = LinQuantArray(UInt32,A,dim,e)
-
-# for signed integers of 8,16,24 and 32 bit
-LinQuantInt8Array(A::AbstractArray{T,N},dim::Int,e::Option{Tuple}) where {T,N} = LinQuantArray(Int8,A,dim,e)
-LinQuantInt16Array(A::AbstractArray{T,N},dim::Int,e::Option{Tuple}) where {T,N} = LinQuantArray(Int16,A,dim,e)
-LinQuantInt24Array(A::AbstractArray{T,N},dim::Int,e::Option{Tuple}) where {T,N} = LinQuantArray(Int24,A,dim,e)
-LinQuantInt32Array(A::AbstractArray{T,N},dim::Int,e::Option{Tuple}) where {T,N} = LinQuantArray(Int32,A,dim,e)
-
+LinQuantArray{T}(A::AbstractArray{T,N},dim::Int,ext::Option{Tuple}=nothing) where {T,N} = LinQuantArray(T,A,dim, ext)
 
 """Undo the linear quantisation independently along one dimension, and returns
 an array whereby the dimension always comes last. Hence, might be permuted compared
