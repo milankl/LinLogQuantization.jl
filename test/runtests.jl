@@ -1,5 +1,27 @@
 using LinLogQuantization
+using Infiltrator
 using Test
+
+
+T = Float16
+U = Int16 
+
+A = rand(T, (10,10))
+Amin, Amax = extrema(A)
+Q = LinQuantization(U,A)
+A2 = Array{T}(Q)
+
+Qmin = Q.min                     # min of original Array as Float64
+Qmax = Q.max                     # max of original Array as Float64
+Tmin = Float64(typemin(eltype(Q)))  # min representable in type as Float64
+Tmax = Float64(typemax(eltype(Q)))  # max representable in type as Float64
+Δ = (Qmax-Qmin)/(Tmax-Tmin) 
+Δ⁻¹ = Amin == Amax ? zero(Float64) : (Tmax-Tmin)/(Amax-Amin)
+1 / Δ⁻¹
+
+A[1]
+Q1 = round((A[1]-Amin)*Δ⁻¹ + Tmin)
+Qmin + (Q1-Tmin)*Δ
 
 @testset "minpos" begin
     @test minpos([0,0,0,0]) == 0
@@ -14,25 +36,34 @@ using Test
 end
 
 @testset "Linear quantization" begin
-    for T in [Float64,Float32,Float16]
-        for s in [(100,),
-                    (10,20),
-                    (13,14,15),
-                    (23,17,12,5)]
-        
-            A = rand(T,s...)
 
-            for LinQ in [LinQuant8Array,
-                        LinQuant16Array,
-                        LinQuant24Array,
-                        LinQuant32Array]
-                
-                # initial conversion is not reversible
-                # due to rounding errors
-                A2 = Array{T}(LinQ(A))
+    @testset "Default extrema" begin 
+        for T in [Float64, Float32, Float16]
+            for s in [(100,),
+                        (10,20),
+                        (13,14,15),
+                        (23,17,12,5)]
+            
+                A = rand(T,s...)
 
-                # then test whether back&forth conversion is reversible
-                @test A2 == Array{T}(LinQ(A2))
+                for U in [
+                            UInt8,
+                            UInt16,
+                            UInt24,
+                            UInt32,
+                            Int8,
+                            Int16,
+                            Int24,
+                            Int32
+                        ]  
+                    
+                    # initial conversion is not reversible
+                    # due to rounding errors
+                    A2 = Array{T}(LinQuantArray{U}(A))
+
+                    # then test whether back&forth conversion is reversible
+                    @test A2 == Array{T}(LinQuantArray{U}(A2))
+                end
             end
         end
     end
