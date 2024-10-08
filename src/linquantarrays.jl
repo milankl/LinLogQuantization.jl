@@ -30,11 +30,11 @@ Quantise an array linearly into a LinQuantArray.
 
 function LinQuantization(
     ::Type{T},
-    A::AbstractArray,
-    extrema::Nothing=nothing
+    A::AbstractArray;
+    extrema::Option{Tuple}=nothing
 ) where {T<:Integer}
     # range of values in A
-    Amin, Amax  = Float64.(extrema(A))
+    Amin, Amax  = isnothing(extrema) ? Float64.(Base.extrema(A)) : Float64.(extrema)
 
     # guard against infinite values
     (isfinite(Amin) && isfinite(Amax)) || throw(DomainError("Linear quantization only in (-∞,∞)"))
@@ -47,44 +47,25 @@ function LinQuantization(
 
     Q = similar(A,T)                        # preallocate
 
-    # map minimum to typemin(T), maximum to typemax(t)
-    @inbounds for i in eachindex(Q)
-        Q[i] = round((A[i]-Amin)*Δ⁻¹ + Tmin)
+    if isnothing(extrema) # range defaults to extrema(A)
+        # map minimum to typemin(T), maximum to typemax(t)
+        @inbounds for i in eachindex(Q)
+            Q[i] = round((A[i]-Amin)*Δ⁻¹ + Tmin)
+        end
+    else 
+        # map minimum to typemin(T), maximum to typemax(t)
+        # clamp to [Tmin,Tmax] removing out-of-range values
+        @inbounds for i in eachindex(Q)
+            Q[i] = round(T, clamp((A[i]-Amin)*Δ⁻¹ + Tmin, Tmin, Tmax))
+        end
     end
 
     return LinQuantArray{T,ndims(Q)}(Q,Amin,Amax)
 end
 
-function LinQuantization(
-    ::Type{T},
-    A::AbstractArray,
-    extrema::Tuple,
-) where {T<:Integer}
-    # minimum-maximum range of values
-    Amin, Amax = Float64.(extrema)    
-
-    # guard against infinite values
-    (isfinite(Amin) && isfinite(Amax)) || throw(DomainError("Linear quantization only in (-∞,∞)"))
-    
-    # minimum and maximum representable value of type T
-    Tmin, Tmax = Float64(typemin(T)), Float64(typemax(T))
-
-    # inverse spacing, set to zero for no range
-    Δ⁻¹ = Amin == Amax ? zero(Float64) : (Tmax-Tmin)/(Amax-Amin)
-    
-    # preallocate
-    Q = similar(A, T)                        
-
-    # map minimum to typemin(T), maximum to typemax(t)
-    # clamp to [Amin,Amax] removing out-of-range values
-    @inbounds for i in eachindex(Q)
-        Q[i] = round(T, clamp((A[i]-Amin)*Δ⁻¹ + Tmin, Tmin, Tmax))
-    end
-
-    return LinQuantArray{T,ndims(Q)}(Q,Amin,Amax)
+function LinQuantArray{U}(A::AbstractArray{T,N}; extrema::Option{Tuple}=nothing) where {U<:Integer,T,N}
+    LinQuantization(U,A; extrema=extrema)
 end
-
-LinQuantArray{T}(A::AbstractArray{T,N},ext::Option{Tuple}=nothing) where {T,N} = LinQuantization(T,A,ext)
 
 # keep compatibility: shortcuts for unsigned integers of  8, 16, 24 and 32 bit 
 LinQuant8Array(A::AbstractArray{T,N}) where {T,N} = LinQuantization(UInt8,A)
@@ -114,10 +95,10 @@ function Base.Array{U}(Q::LinQuantArray) where {U<:AbstractFloat}
 end
 
 # define default conversions for unsigned 8, 16, 24 and 32 bit
-Base.Array{T}(Q::LinQuantArray{UInt8,N}) where {T,N} = Array{T}(Q)
-Base.Array{T}(Q::LinQuantArray{UInt16,N}) where {T,N} = Array{T}(Q)
-Base.Array{T}(Q::LinQuantArray{UInt24,N}) where {T,N} = Array{T}(Q)
-Base.Array{T}(Q::LinQuantArray{UInt32,N}) where {T,N} = Array{T}(Q)
+Base.Array(Q::LinQuantArray{UInt8,N}) where {N} = Array{Float32}(Q)
+Base.Array(Q::LinQuantArray{UInt16,N}) where {N} = Array{Float32}(Q)
+Base.Array(Q::LinQuantArray{UInt24,N}) where {N} = Array{Float32}(Q)
+Base.Array(Q::LinQuantArray{UInt32,N}) where {N} = Array{Float64}(Q)
 
 # define default conversions for signed 8, 16, 24 and 32 bit
 Base.Array(Q::LinQuantArray{Int8,N}) where N = Array{Float32}(Q)
