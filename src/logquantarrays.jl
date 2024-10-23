@@ -20,9 +20,11 @@ end
 
 """Quantize elements of an array logarithmically into UInts with
 either round to nearest in linear or Logarithmic space."""
-function LogQuantization(   ::Type{T},
-                            A::AbstractArray,
-                            round_nearest_in::Symbol=:linspace) where {T<:Unsigned}
+function LogQuantization(   
+    ::Type{T},
+    A::AbstractArray,
+    round_nearest_in::Symbol=:linspace
+) where {T<:Unsigned}
 
     (any(A .< zero(eltype(A))) || ~all(isfinite.(A))) &&
         throw(DomainError("Logarithmic  quantization only for positive&zero entries."))
@@ -34,18 +36,18 @@ function LogQuantization(   ::Type{T},
 
     # throw error in case the range is zero.
     if logmin == logmax
-        Δ = 0.0
+        Δ⁻¹ = 0.0
         c = 0.0
     else
         # inverse log spacing
         # map min to 1 and max to ff..., reserve 0 for 0.
-        Δ = (2^(sizeof(T)*8)-2)/(logmax-logmin)
+        Δ⁻¹ = (2^(sizeof(T)*8)-2)/(logmax-logmin)
     
         # shift to round-to-nearest in lin or log-space
         if round_nearest_in == :linspace
-            c = 1/2 - Δ*log(mi*(exp(1/Δ)+1)/2)
+            c = 1/2 - Δ⁻¹*log(mi*(exp(1/Δ⁻¹)+1)/2)
         elseif round_nearest_in == :logspace
-            c = -logmin*Δ
+            c = -logmin*Δ⁻¹
         else
             throw(ArgumentError("Round-to-nearest either :linspace or :logspace"))
         end
@@ -57,7 +59,7 @@ function LogQuantization(   ::Type{T},
     @inbounds for i in eachindex(A)
         # store 0 as 0x00...
         # store positive numbers via convert to logpacking as 0x1-0xff..
-        Q[i] = iszero(A[i]) ? zero(T) : convert(T,round(c + Δ*log(Float64(A[i]))))+one(T)
+        Q[i] = iszero(A[i]) ? zero(T) : convert(T,round(c + Δ⁻¹*log(Float64(A[i]))))+one(T)
     end
 
     return LogQuantArray{T,ndims(Q)}(Q,Float64(logmin),Float64(logmax))
