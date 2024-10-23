@@ -126,7 +126,7 @@ end
                     (23,17,12,5)]
         
             # Generate a matrix with values between -1 and 1
-            A = 2 * rand(T, s...) .- 1
+            A = rand(T, s...)
 
             for LogQ in [LogQuant8Array,
                         LogQuant16Array,
