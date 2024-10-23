@@ -1,25 +1,44 @@
 # LinLogQuantization.jl
-[![CI](https://github.com/milankl/LinLogQuantization.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/milankl/LinLogQuantization.jl/actions/workflows/CI.yml)
+[![CI](https://github.com/milankl/LinLogquantization.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/milankl/LinLogquantization.jl/actions/workflows/CI.yml)
 
-Linear and logarithmic quantisation for Julia arrays into 8, 16, 24 or 32-bit.
-Quantisation is a lossy compression method that divides the range of values in
-an array in equi-distant quantums and encodes those from 0 to `2^n-1` where
-`n` is the number of bits available. The quantums are either equi-distant in
+
+Linear and logarithmic quantization for Julia arrays into 8, 16, 24 or 32-bit integers.
+Linear quantization is available into both unsigned (`UInt8, UInt16, UInt24, UInt32`) and singed (`Int8, Int16, Int24, Int32`) 
+integers. Logarithmic quantization is available for unsigned integers. 
+
+## Table of Contents
+
+- [Introduction](#Introduction)
+- [Usage](#Usage)
+- [Theory](#Theory)
+- [Benchmarking](#Benchmarking)
+- [Installation](#Installation)
+
+## Introduction 
+
+Quantization is a lossy compression method that divides the range of values in
+an array of type `U<:Number` into equi-distant quanta and encodes those into values of 
+type `T<:Integer`, which will range from `typemin(T)` to `typemax(T)`. For 
+`T<:Unsigned`, this range will be `[0, 2^n-1]`, and for `T<:Signed`, this range 
+will be `[-2^(n-1), 2^(n-1)-1]`, where `n` is the number of bits.
+The quanta are either equi-distant in
 linear space or in logarithmic space, which has a denser encoding for
 values close to the minimum in trade-off with a less dense encoding close
 to the maximum. 
 
-Linear quantization takes values in (-∞,∞) (no `NaN` or `Inf`) logarithmic quantization
+Linear quantization takes values in (-∞,∞) (no `NaN` or `Inf`), while logarithmic quantization
 is only supported for values in [0,∞).
 
-## Usage: Linear quantization
+## Usage
 
-Linear quantisation of n-dimensional arrays (any number format that can be
+### Linear quantization
+
+Linear quantization of n-dimensional arrays (any number format that can be
 converted to `Float64` is supported, including `Float32, Float16`)
-into 8, 16, 24 or 32 bit is achieved via
+into both signed and unsigned 8, 16, 24 or 32 bit integers is achieved via
 ```julia
 julia> A = rand(Float32,1000)
-julia> L = LinQuant8Array(A)
+julia> L = LinQuantArray{UInt8}(A)
 1000-element LinQuantArray{UInt8,1}:
  0xc2
  0x19
@@ -27,8 +46,18 @@ julia> L = LinQuant8Array(A)
  0x5b
     ⋮
 ```
-and similarly with `LinQuant16Array, LinQuant24Array, LinQuant32Array`.
-Decompression via
+and similarly with `LinQuantArray{Int8}, LinQuantArray{UInt16}, LinQuantArray{Int16}, LinQuantArray{UInt24}, LinQuantArray{Int24}, LinQuantArray{UInt32}, LinQuantArray{Int32}`. 
+Aliases exist for quantization into unsigned integers, namely: `LinQuant8Array, LinQuant16Array, LinQuant24Array, LinQuant32Array`.
+julia> L2 = LinQuant8Array(A)
+1000-element LinQuantArray{UInt8,1}:
+ 0xc2
+ 0x19
+ 0x3e
+ 0x5b
+    ⋮
+```
+
+Decompression via: 
 ```julia
 julia> Array(L)
 1000-element Array{Float32,1}:
@@ -41,11 +70,48 @@ julia> Array(L)
 `Array{T}()` optionally takes a type parameter `T` such that decompression to
 other number formats than the default `Float32` is possible involves a rounding
 error which follows a round-to-nearest in linear space.
+```julia
+julia> Array{Float16}(L)
+1000-element Array{Float16,1}:
+ 0.76074356
+ 0.09858093
+ 0.24355145
+ 0.357177
+    ⋮
+```
 
-### Logarithmic quantisation
+For linear quantization you can also specify custom extrema instead of using the default 
+minimum and maximum values of the array to encode. To do so, you can you the `extrema` keyword 
+argument, which expects a tuple:
+```julia 
+julia> A = rand(Float32, (10,10))
+julia> L = LinQuantArray{Int16}(A; extrema=(0.3, 0.6))
+julia> A2 = Array{Float32}(L)
+10×10 Matrix{Float32}:
+ 0.3       0.6       0.3       …  0.6       0.3       0.309247
+ 0.503781  0.6       0.3          0.3       0.6       0.6
+ 0.3       0.3       0.575972     0.6       0.6       0.6
+ 0.384633  0.6       0.6          0.3       0.3       0.6
+ 0.479625  0.313481  0.6          0.3       0.6       0.393147
+ 0.6       0.6       0.3       …  0.3       0.6       0.6
+ 0.445077  0.6       0.411673     0.3       0.545823  0.419716
+ 0.3       0.6       0.479657     0.517707  0.32639   0.385713
+ 0.349673  0.6       0.3          0.6       0.3       0.6
+ 0.383639  0.6       0.6          0.6       0.6       0.6
+
+julia> extrema(A2) == Float32.((0.3, 0.6))
+true 
+julia> minimum(A2) == Float32(0.3)
+true 
+julia> maximum(A2) == Float32(0.6)
+true
+```
+
+
+### Logarithmic quantization
 
 In a similar way, `LogQuant8Array, LogQuant16Array, LogQuant24Array, LogQuant32Array`
-compresses an n-dimensional array (non-negative elements only) via logarithmic quantisation.
+compresses an n-dimensional array (non-negative elements only) via logarithmic quantization.
 ```julia
 julia> A = rand(Float32,100,100)
 julia> A[1,1] = 0
@@ -63,39 +129,43 @@ julia> L = LogQuant16Array(A)
 ```
 Exception occurs for 0, which is mapped to `0x0`.
 `Ox1` to `0xff...ff` are then the available bitpatterns to encode the range from `minimum(A)`
-to `maximum(A)` logarithmically. By default the rounding mode for logarithmic quantisation
+to `maximum(A)` logarithmically. By default the rounding mode for logarithmic quantization
 is round-to-nearest in linear space. Alternatively, a second argument can be either
 `:linspace` or `:logspace`, which allows for round-to-nearest in logarithmic space.
-Decompression as with linear quantisation via the `Array()` function.
+Decompression as with linear quantization via the `Array()` function.
 
 ## Theory
 
-To compress an array `A`, the minimum and maximum is obtained
+### Linear quantization
+To compress an array `A` into a type `T`, the minimum and maximum of both the array and the tyep are obtained
 ```julia
 Amin = minimum(A)
 Amax = maximum(A)
+
+Tmin = typemin(T)
+Tmax = typemax(T)
 ```
-which allows the calculation of `Δ`, the inverse of the spacing between two
+which allows the calculation of `Δ⁻¹`, the inverse of the spacing between two
 quantums
 ```julia
-Δ = (2^n-1)/(Amax-Amin)
+Δ⁻¹ = (Tmax - Tmin)/(Amax-Amin)
 ```
-where `n` is the number of bits used for quantisation. For every
+where `n` is the number of bits used for quantization. For every
 element `a` in `A` the corresponding quantum `q` which is closest in linear space
 is calculated via
 ```julia
-q = T(round((a-Amin)*Δ))
+q = T(round((A[i]-Amin)*Δ⁻¹ + Tmin))
 ```
 where `round` is the round-to-nearest function for integers and `T` the conversion
-function to 24-bit unsigned integers `UInt24` (or `UInt8, UInt16` for other choices
-of `n`). Consequently, an array of all `q` and `Amin,Amax` have to be stored to
+function to the chosen type. Consequently, an array of all `q` and `Amin,Amax` have to be stored to
 allow for decompression, which is obtained by reversing the conversion from `a`
 to `q`. Note that the rounding error is introduced as the `round` function cannot
 be inverted.
 
-Logarithmic quantisation distributes the quantums logarithmically, such that
+### Logarithmic quantization
+Logarithmic quantization distributes the quantums logarithmically, such that
 more bitpatterns are reserved for values close to the minimum and fewer close to
-the maximum in `A`. Logarithmic quantisation can be generalised to negative values
+the maximum in `A`. Logarithmic quantization can be generalised to negative values
 by introducing a sign-bit, however, we limit our application here to non-negative
 values. We obtain the minimum and maximum value in `A` as follows
 ```julia
@@ -105,27 +175,27 @@ Alogmax = log(maximum(A))
 where zeros are ignored in the `minpos` function, which instead returns the smallest
 positive value. The inverse spacing `Δ` is then
 ```julia
-Δ = (2^n-2)/(logmax-logmin)
+Δ⁻¹ = (2^n-2)/(logmax-logmin)
 ```
-Note, that only `2^n-1` (and not 2^n as for linear quantisation) bitpatterns
+Note, that only `2^n-1` (and not 2^n as for linear quantization) bitpatterns
 are used to resolve the range between minimum and maximum, as we want to reserve
 the bitpattern `0x000000` for zero. The corresponding quantum `q` for `a`
 `A` is then
 ```julia
-q = T(round(c + Δ*log(a)))+0x1
+q = T(round(c + Δ⁻¹*log(a)))+0x1
 ```
-unless `a=0` in which case `q=0x000000`. The constant `c` can be set as `-Alogmin*Δ`
-such that we obtain essentially the same compression function as for linear quantisation,
+unless `a=0` in which case `q=0x000000`. The constant `c` can be set as `-Alogmin*Δ⁻¹`
+such that we obtain essentially the same compression function as for linear quantization,
 except that every element `a` in `A` is converted to their logarithm first. However,
 rounding to nearest in logarithmic space will therefore be achieved, which is a
 biased rounding mode, that has a bias away from zero. We can correct this
 round-to-nearest in logarithmic space rounding mode with
 ```julia
-c = 1/2 - Δ*log(minimum(A)*(exp(1/Δ)+1)/2)
+c = 1/2 - Δ⁻¹*log(minimum(A)*(exp(1/Δ⁻¹)+1)/2)
 ```
 which yields round-to-nearest in linear space. See next section.
 
-## Round to nearest in linear or logarithmic space
+### Round to nearest in linear or logarithmic space
 
 For a logarithmic integer system with base `b` (i.e. only `0,b,b²,b³,...`
 are representable), for example, we have
@@ -154,14 +224,14 @@ c_b + log_b(1+(b-1)/2) = 0.5
 So, for `b=2` we have `c_b = 0.5 - log2(1.5) ≈ -0.085`. Hence, a small number will
 be subtracted before rounding is applied to reduce the away-from-zero bias.
 
-![](https://github.com/milankl/LinLogQuantization.jl/blob/main/figs/round_logquant.png)
+![](https://github.com/milankl/LinLogquantization.jl/blob/main/figs/round_logquant.png)
 
 **Figure A1.** Schematic to illustrate round-to-nearest in linear vs logarithmic
 space for logarithmic number systems.
 
-We now generalise the logarithmic system, such that the distance `dlog = 1/Δ` between
+We now generalise the logarithmic system, such that the distance `dlog = 1/Δ⁻¹` between
 two representable numbers (i.e. quantums) is not necessarily 1 (in log-space) and
-we allow for an offset as done in the logarithmic quantisation. Let `min` be the
+we allow for an offset as done in the logarithmic quantization. Let `min` be the
 offset (i.e. the minimum of the uncompressed array) and `dlin` the spacing between
 the first two representable quantums `min,q2`. Then the logarithm of halfway in
 linear space, `log_b(min + dlin/2)`, should map to `0.5`.
@@ -172,28 +242,40 @@ With `dlin = b^(log_b(min) + dlog) - min` this can be transformed into
 ```julia
 c_b = 1/2 - 1/dlog*log_b((b^dlog + 1)/2)
 ```
-and combined with the offset correction `-log_b(min)*Δ` to form either
+and combined with the offset correction `-log_b(min)*Δ⁻¹` to form either
 ```julia
-c = -log(min)*Δ,   (round-to-nearest in log-space)
-c = 1/2 - Δ*log(minimum(A)*(exp(1/Δ)+1)/2)    (round-to-nearest in linear-space)
+c = -log(min)*Δ⁻¹,   (round-to-nearest in log-space)
+c = 1/2 - Δ⁻¹*log(minimum(A)*(exp(1/Δ⁻¹)+1)/2)    (round-to-nearest in linear-space)
 ```
 with `b = ℯ`, so that only the natural logarithm has to be computed for every
 element in the uncompressed array.
 
+ 
 ## Benchmarking
 
 Approximate throughputs are (via `@btime`)
 
-| Method           | 8 bit    | 16 bit    | 24 bit   |    32 bit|
+### Unsigned integers 
+| Method           | UInt8    | UInt16    | UInt24   |   UInt32 |
 | ---------------- | -------: | --------: | -------: | -------: |
-| **Linear** |
+| **Linear**       |
 | compression      | 1350 MB/s| 1350 MB/s | 50 MB/s  | 1350 MB/s|
 | decompression    | 4700 MB/s| 4700 MB/s | 4000 MB/s| 3600 MB/s| 
 | **Logarithmic**  |
 | compression      |  285 MB/s|   285 MB/s|   40 MB/s|  285 MB/s|
 | decompression    |  250 MB/s|   250 MB/s|  250 MB/s|  500 MB/s|
 
-24-bit quantisation is via `UInt24` from the `BitIntegers` package,
+
+### Signed integers
+
+### Unsigned integers 
+| Method           | UInt8   | UInt16     | UInt24   |    UInt32 |
+| ---------------- | -------: | --------: | -------: | -------: |
+| **Linear**       |
+| compression      | - MB/s| - MB/s | - MB/s| - MB/s|
+| decompression    | - MB/s| - MB/s | - MB/s| - MB/s| 
+
+24-bit quantization is via `UInt24`  and `Int24` from the `BitIntegers` package,
 which introduces a drastic slow-down.
 
 ## Installation
