@@ -23,7 +23,8 @@ end
                         (13,14,15),
                         (23,17,12,5)]
             
-                A = rand(T,s...)
+                # Generate a matrix with values between -1 and 1
+                A = rand(T, s...)
 
                 for U in [
                             UInt8,
@@ -55,7 +56,8 @@ end
                             (13,14,15),
                             (23,17,12,5)]
                 
-                    A = rand(T,s...)
+                    # Generate a matrix with values between -1 and 1
+                    A = rand(T, s...)
 
                     for U in [
                                 UInt8,
@@ -74,7 +76,41 @@ end
 
                         # then test whether back&forth conversion is reversible
                         @test A2 == Array{T}(LinQuantArray{U}(A2; extrema=ext))
-                        @test Base.extrema(A2) == ext
+                        @test Base.extrema(A2) == T.(ext)
+                    end
+                end
+            end
+        end
+    end
+
+    @testset "Matrix with negative values and custom extrema" begin
+        for ext in [(-0.1, 0.6), (-0.22, 0.35), (-0.3, 0.45)]
+            for T in [Float64, Float32, Float16]
+                for s in [(100,),
+                            (10,20),
+                            (13,14,15),
+                            (23,17,12,5)]
+                
+                    # Generate a matrix with values between -1 and 1
+                    A = 2 * rand(T, s...) .- 1
+
+                    @test minimum(A) < 0
+                    @test maximum(A) > 0
+
+                    for U in [
+                                Int8,
+                                Int16,
+                                Int24,
+                                Int32
+                            ]  
+                        
+                        # initial conversion is not reversible
+                        # due to rounding errors
+                        A2 = Array{T}(LinQuantArray{U}(A; extrema=ext))
+
+                        # then test whether back&forth conversion is reversible
+                        @test A2 == Array{T}(LinQuantArray{U}(A2; extrema=ext))
+                        @test Base.extrema(A2) == T.(ext)
                     end
                 end
             end
@@ -89,7 +125,8 @@ end
                     (13,14,15),
                     (23,17,12,5)]
         
-            A = rand(T,s...)
+            # Generate a matrix with values between -1 and 1
+            A = 2 * rand(T, s...) .- 1
 
             for LogQ in [LogQuant8Array,
                         LogQuant16Array,
@@ -140,8 +177,54 @@ end
     end 
 
     @testset "Custom extrema" begin
+        for ext in [(0.1, 0.6), (0.22, 0.75), (0.3, 0.5)]
+            A = rand(Float32,10,20,30,40)
+
+            A2 = Array{Float32}(LinQuantArray{UInt32}(A, 4; extrema=ext))
+            @test A2 == Array{Float32}(LinQuantArray{UInt32}(A2, 4; extrema=ext))
 
 
+            A2 = Array{Float32}(LinQuantArray{UInt24}(A, 4; extrema=ext))
+            @test A2 == Array{Float32}(LinQuantArray{UInt24}(A2, 4; extrema=ext))
+            
+            A2 = Array{Float32}(LinQuantArray{UInt16}(A, 4; extrema=ext))
+            @test A2 == Array{Float32}(LinQuantArray{UInt16}(A2, 4; extrema=ext))
+
+            A2 = Array{Float32}(LinQuantArray{UInt8}(A, 4; extrema=ext))
+            all(isapprox.(A2, Array{Float32}(LinQuantArray{UInt8}(A2, 4; extrema=ext)), atol=1e-1))
+
+            A2 = Array{Float32}(LinQuantArray{Int32}(A, 4; extrema=ext))
+            @test A2 == Array{Float32}(LinQuantArray{Int32}(A2, 4; extrema=ext))
+
+            A2 = Array{Float32}(LinQuantArray{Int24}(A, 4; extrema=ext))
+            @test A2 == Array{Float32}(LinQuantArray{Int24}(A2, 4; extrema=ext))
+            
+            A2 = Array{Float32}(LinQuantArray{Int16}(A, 4; extrema=ext))
+            @test A2 == Array{Float32}(LinQuantArray{Int16}(A2, 4; extrema=ext))
+
+            A2 = Array{Float32}(LinQuantArray{Int8}(A, 4; extrema=ext))
+            all(isapprox.(A2, Array{Float32}(LinQuantArray{Int8}(A2, 4; extrema=ext)), atol=1e-1))
+
+        end
+    end
+
+    @testset "Negative values" begin
+
+        A = 2 * rand(Float32,10,20,30,40) .- 1
+        @test minimum(A) < 0
+        @test maximum(A) > 0
+
+        Q = LinQuantArray{Int32}(A, 4)
+        @test A ≈ Array{Float32}(Q)
+
+        Q = LinQuantArray{Int24}(A, 4)
+        @test A ≈ Array{Float32}(Q)
+
+        Q = LinQuantArray{Int16}(A, 4)
+        @test A ≈ Array{Float32}(Q)
+
+        Q = LinQuantArray{Int8}(A, 4)
+        @test all(isapprox.(A, Array{Float32}(Q), atol=1e-1))
     end
 end
 
