@@ -126,7 +126,7 @@ function LinQuantArray(
     return L
 end
 
-function LinQuantArray{U}(A::AbstractArray{T,N},dim::Int,extrema::Option{Tuple}=nothing) where {U<:Integer,T,N} 
+function LinQuantArray{U}(A::AbstractArray{T,N},dim::Int; extrema::Option{Tuple}=nothing) where {U<:Integer,T,N} 
     LinQuantArray(U,A,dim;extrema=extrema)
 end
 
