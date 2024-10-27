@@ -16,6 +16,34 @@ end
 
 @testset "Linear quantization" begin
 
+    @testset "Backward compatibility" begin 
+        for T in [Float64, Float32, Float16]
+            for s in [(100,),
+                        (10,20),
+                        (13,14,15),
+                        (23,17,12,5)]
+            
+                # Generate a matrix with values between -1 and 1
+                A = rand(T, s...)
+
+                for L in [
+                            LinQuant8Array,
+                            LinQuant16Array,
+                            LinQuant24Array,
+                            LinQuant32Array
+                        ]  
+                    
+                    # initial conversion is not reversible
+                    # due to rounding errors
+                    A2 = Array{T}(L(A))
+
+                    # then test whether back&forth conversion is reversible
+                    @test A2 == Array{T}(L(A2))
+                end
+            end
+        end
+    end 
+
     @testset "Default extrema" begin 
         for T in [Float64, Float32, Float16]
             for s in [(100,),
