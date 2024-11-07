@@ -5,14 +5,15 @@ const Option{T} = Union{T,Nothing}
 Struct that holds the quantised array as UInts with an additional
 field for the min, max of the original range.
 """
-struct LinQuantArray{T,N} <: AbstractArray{Integer,N}
+struct LinQuantArray{T, N} <: AbstractArray{Integer, N}
     A::Array{T,N}       # array of UInts
     min::Float64        # offset min, max
     max::Float64
 end
 
 Base.size(QA::LinQuantArray) = size(QA.A)
-Base.getindex(QA::LinQuantArray,i...) = getindex(QA.A,i...)
+Base.axes(QA::LinQuantArray) = axes(QA.A)
+Base.getindex(QA::LinQuantArray, i...) = getindex(QA.A, i...)
 Base.eltype(Q::LinQuantArray{T,N}) where {T,N} = T
 
 """
@@ -47,7 +48,7 @@ function LinQuantization(
     # inverse spacing, set to zero for no range
     Δ⁻¹ = Amin == Amax ? zero(Float64) : (Tmax-Tmin)/(Amax-Amin)
 
-    Q = similar(A,T)                        # preallocate
+    Q = similar(A, T)                       # preallocate
 
     if isnothing(extrema) # range defaults to extrema(A)
         # map minimum to typemin(T), maximum to typemax(t)
@@ -62,11 +63,11 @@ function LinQuantization(
         end
     end
 
-    return LinQuantArray{T,ndims(Q)}(Q,Amin,Amax)
+    return LinQuantArray{T, ndims(Q)}(Q, Amin, Amax)
 end
 
-function LinQuantArray{U}(A::AbstractArray{T,N}; extrema::Option{Tuple}=nothing) where {U<:Integer,T,N}
-    LinQuantization(U,A; extrema=extrema)
+function LinQuantArray{U}(A::AbstractArray{T,N}; extrema::Option{Tuple}=nothing) where {U<:Integer, T, N}
+    LinQuantization(U, A; extrema=extrema)
 end
 
 # keep compatibility: shortcuts for unsigned integers of 8, 16, 24 and 32 bit
@@ -96,7 +97,7 @@ function Base.Array{U}(Q::LinQuantArray) where {U<:AbstractFloat}
     Tmax = Float64(typemax(T))       # max representable in type as Float64
     Δ = (Qmax-Qmin)/(Tmax-Tmin)      # linear spacing
 
-    A = similar(Q,U)
+    A = similar(Q, U)
 
     @inbounds for i in eachindex(A)
         # convert Q[i]::Integer to Float64 via *
@@ -138,12 +139,12 @@ dim in array A.
 function LinQuantArray(
     ::Type{TInteger},
     A::AbstractArray{T,N},
-    dim::Int;
+    dim::Integer;
     extrema::Option{Tuple} = nothing
 ) where {TInteger,T,N}
     @assert dim <= N   "Can't quantize a $N-dimensional array in dim=$dim"
     n = size(A)[dim]
-    L = Vector{LinQuantArray}(undef,n)
+    L = Vector{LinQuantArray}(undef, n)
     t = [if j == dim 1 else Colon() end for j in 1:N]
     for i in 1:n
         t[dim] = i
@@ -165,8 +166,6 @@ LinQuant8Array(A::AbstractArray{T,N},dim::Int) where {T,N} = LinQuantArray(UInt8
 LinQuant16Array(A::AbstractArray{T,N},dim::Int) where {T,N} = LinQuantArray(UInt16,A,dim)
 LinQuant24Array(A::AbstractArray{T,N},dim::Int) where {T,N} = LinQuantArray(UInt24,A,dim)
 LinQuant32Array(A::AbstractArray{T,N},dim::Int) where {T,N} = LinQuantArray(UInt32,A,dim)
-
-
 
 """
     Array{U}(L::Vector{LinQuantArray}) where {U<:AbstractFloat}

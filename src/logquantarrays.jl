@@ -57,7 +57,7 @@ function LogQuantization(
     Q = similar(A,T)
 
     @inbounds for i in eachindex(A)
-        # store 0 as 0x00...
+        # store 0 as 0x00...
         # store positive numbers via convert to logpacking as 0x1-0xff..
         Q[i] = iszero(A[i]) ? zero(T) : convert(T,round(c + Δ⁻¹*log(Float64(A[i]))))+one(T)
     end
