@@ -250,27 +250,28 @@ element in the uncompressed array.
  
 ## Benchmarking
 
-Approximate throughputs are (via `@btime`)
+Approximate throughputs in a MacBook Pro M2, 24GB RAM are (via `@benchmark`)
 
-### Unsigned integers 
-| Method           | UInt8    | UInt16    | UInt24   |   UInt32 |
+### Linear quantization
+| Method           | UInt8    | Int8     | UInt16    | Int16     | UInt24   | Int24    | UInt32   | Int32    |
+| ---------------- | -------: | -------: | --------: | --------: | -------: | -------: | -------: | -------: |
+| **Default extrema** |
+| compression      | 1500 MB/s | 1500 MB/s | 1500 MB/s | 1500 MB/s |  100 MB/s |  100 MB/s | 1500 MB/s | 1500 MB/s |
+| decompression    | 16000 MB/s | 8000 MB/s | 16000 MB/s | 8000 MB/s | 8000 MB/s | 8000 MB/s | 16000 MB/s | 16000 MB/s |
+| **Custom extrema** |
+| compression      | 8000 MB/s | 8000 MB/s | 8000 MB/s | 8000 MB/s |    100 MB/s |    100 MB/s | 8000 MB/s | 8000 MB/s |
+| decompression    | 16000 MB/s | 8000 MB/s | 16000 MB/s | 8000 MB/s |    8000 MB/s |    8000 MB/s | 16000 MB/s | 16000 MB/s |
+
+
+### Logarithmic quantization
+| Method           | UInt8    | UInt16    | UInt24   | UInt32   |
 | ---------------- | -------: | --------: | -------: | -------: |
-| **Linear**       |
-| compression      | 1350 MB/s| 1350 MB/s | 50 MB/s  | 1350 MB/s|
-| decompression    | 4700 MB/s| 4700 MB/s | 4000 MB/s| 3600 MB/s| 
-| **Logarithmic**  |
-| compression      |  285 MB/s|   285 MB/s|   40 MB/s|  285 MB/s|
-| decompression    |  250 MB/s|   250 MB/s|  250 MB/s|  500 MB/s|
-
-
-### Signed integers
-
-### Unsigned integers 
-| Method           | UInt8   | UInt16     | UInt24   |    UInt32 |
-| ---------------- | -------: | --------: | -------: | -------: |
-| **Linear**       |
-| compression      | - MB/s| - MB/s | - MB/s| - MB/s|
-| decompression    | - MB/s| - MB/s | - MB/s| - MB/s| 
+| **linspace** |
+| compression      |  800 MB/s |  800 MB/s |  100 MB/s |  700 MB/s |
+| decompression    | 2000 MB/s | 2000 MB/s | 2000 MB/s | 2000 MB/s |
+| **logspace** |
+| compression      |  800 MB/s |  800 MB/s |  100 MB/s |  700 MB/s |
+| decompression    | 2000 MB/s | 2000 MB/s | 2000 MB/s | 2000 MB/s |
 
 24-bit quantization is via `UInt24`  and `Int24` from the `BitIntegers` package,
 which introduces a drastic slow-down.
