@@ -23,7 +23,7 @@ end
                         (13,14,15),
                         (23,17,12,5)]
             
-                # Generate a matrix with values between -1 and 1
+                # Generate a matrix with values between 0 and 1
                 A = rand(T, s...)
 
                 for L in [
@@ -51,7 +51,7 @@ end
                         (13,14,15),
                         (23,17,12,5)]
             
-                # Generate a matrix with values between -1 and 1
+                # Generate a matrix with values between 0 and 1
                 A = rand(T, s...)
 
                 for U in [
@@ -84,7 +84,7 @@ end
                             (13,14,15),
                             (23,17,12,5)]
                 
-                    # Generate a matrix with values between -1 and 1
+                    # Generate a matrix with values between 0 and 1
                     A = rand(T, s...)
 
                     for U in [
@@ -165,10 +165,10 @@ end
                 
                     # initial conversion is not reversible
                     # due to rounding errors
-                    A2 = Array{T}(LogQ(A,rn))
+                    A2 = Array{T}(LogQ(A, rn))
 
                     # then test whether back&forth conversion is reversible
-                    @test A2 == Array{T}(LogQ(A2,rn))
+                    @test A2 == Array{T}(LogQ(A2, rn))
                 end
             end
         end
@@ -242,14 +242,12 @@ end
         @test minimum(A) < 0
         @test maximum(A) > 0
 
-        Q = LinQuantArray{Int32}(A, 4)
-        @test A ≈ Array{Float32}(Q)
-
-        Q = LinQuantArray{Int24}(A, 4)
-        @test A ≈ Array{Float32}(Q)
-
-        Q = LinQuantArray{Int16}(A, 4)
-        @test A ≈ Array{Float32}(Q)
+        for T in (Int32, Int24, Int16, Int8)
+            Q = LinQuantArray{T}(A, 4)
+            A2 = Array{Float32}(Q)
+            @test A ≈ Array{Float32}(Q)
+            @test A2 == Array{Float32}(LinQuantArray{T}(A2, 4))
+        end
 
         Q = LinQuantArray{Int8}(A, 4)
         @test all(isapprox.(A, Array{Float32}(Q), atol=1e-1))
@@ -258,14 +256,13 @@ end
 
 @testset "LogQuant along dimension" begin
     A = rand(Float32,10,20,30,40)
-    Q = LogQuant32Array(A,4)
-    @test A ≈ Array{Float32}(Q)
 
-    Q = LogQuant24Array(A,4)
-    @test A ≈ Array{Float32}(Q)
-
-    Q = LogQuant16Array(A,4)
-    @test A ≈ Array{Float32}(Q)
+    for T in (Int32, Int24, Int16, Int8)
+        Q = LogQuantArray{T}(A, 4)
+        A2 = Array{Float32}(Q)
+        @test A ≈ Array{Float32}(Q)
+        @test A2 == Array{Float32}(LogQuantArray{T}(A2, 4))
+    end
 
     Q = LogQuant8Array(A,4)
     @test all(isapprox.(A,Array{Float32}(Q),atol=1e-1))
