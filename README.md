@@ -131,6 +131,20 @@ is round-to-nearest in linear space. Alternatively, a second argument can be eit
 See a derivation of this below.
 Decompression as with linear quantization via the `Array()` function.
 
+#### Quantizing Along a Specific Dimension
+
+In some cases, you may want to quantize an array along a specific dimension independently. This is useful when each slice along that dimension represents a separate dataset or when the range of values varies significantly across slices. You can achieve this by specifying the `dims` keyword argument in the `LinQuantArray` function.
+
+For example, to quantize a 3D array along the second dimension:
+
+```julia
+julia> L1 = LinQuantArray{UInt8}(A, dims=2)
+
+julia> L2 = LogQuantArray{UInt8}(A, dims=2)
+```
+
+Each element in the resulting vector `L` is a `LinQuantArray` that represents a slice of the original array along the specified dimension. This allows for independent quantization of each slice.
+
 ## Theory
 
 ### Linear quantization
