@@ -81,35 +81,6 @@ function LogQuantization(
 end
 
 
-"""De-quantise a LogQuantArray into floats."""
-function Base.Array{T}(n::Integer, Q::LogQuantArray) where {T<:AbstractFloat}
-    Qlogmin = Q.min                 # log(min::Float64)
-    Qlogmax = Q.max                 # log(max::Float64)
-
-    # spacing in logspace ::Float64
-    Δ = (Qlogmax - Qlogmin) / (2^n - 2)   # -2 as 0x00.. is reserved for 0
-
-    A = similar(Q, T)                # preallocate
-
-    @inbounds for i in eachindex(A)
-        # 0x0 is unpack as 0
-        # exp in Float64 then convert to T at assignment =
-        A[i] = iszero(Q[i]) ? zero(T) : A[i] = exp(Qlogmin + (Q[i] - 1) * Δ)
-    end
-
-    return A
-end
-
-Base.Array{T}(Q::LogQuantArray{UInt8,N}) where {T,N} = Array{T}(8, Q)
-Base.Array{T}(Q::LogQuantArray{UInt16,N}) where {T,N} = Array{T}(16, Q)
-Base.Array{T}(Q::LogQuantArray{UInt24,N}) where {T,N} = Array{T}(24, Q)
-Base.Array{T}(Q::LogQuantArray{UInt32,N}) where {T,N} = Array{T}(32, Q)
-
-Base.Array(Q::LogQuantArray{UInt8,N}) where {N} = Array{Float32}(8, Q)
-Base.Array(Q::LogQuantArray{UInt16,N}) where {N} = Array{Float32}(16, Q)
-Base.Array(Q::LogQuantArray{UInt24,N}) where {N} = Array{Float32}(24, Q)
-Base.Array(Q::LogQuantArray{UInt32,N}) where {N} = Array{Float64}(32, Q)
-
 
 """
     LogQuantArray(::Type{TUInt},A::AbstractArray{T,N};dims::Int) where {TUInt<:Unsigned,T,N}
@@ -162,9 +133,49 @@ function LogQuant32Array(A::AbstractArray{T,N}, rn::Symbol=:linspace; dims::Opti
 end
 
 
-"""Undo the logarithmic quantisation independently along one dimension, and returns
+
+"""
+    Array{T}(n::Integer, Q::LogQuantArray) where {T<:AbstractFloat} 
+
+De-quantise a LogQuantArray into floats.
+"""
+function Base.Array{T}(n::Integer, Q::LogQuantArray) where {T<:AbstractFloat}
+    Qlogmin = Q.min                 # log(min::Float64)
+    Qlogmax = Q.max                 # log(max::Float64)
+
+    # spacing in logspace ::Float64
+    Δ = (Qlogmax - Qlogmin) / (2^n - 2)   # -2 as 0x00.. is reserved for 0
+
+    A = similar(Q, T)                # preallocate
+
+    @inbounds for i in eachindex(A)
+        # 0x0 is unpack as 0
+        # exp in Float64 then convert to T at assignment =
+        A[i] = iszero(Q[i]) ? zero(T) : A[i] = exp(Qlogmin + (Q[i] - 1) * Δ)
+    end
+
+    return A
+end
+
+Base.Array{T}(Q::LogQuantArray{UInt8,N}) where {T,N} = Array{T}(8, Q)
+Base.Array{T}(Q::LogQuantArray{UInt16,N}) where {T,N} = Array{T}(16, Q)
+Base.Array{T}(Q::LogQuantArray{UInt24,N}) where {T,N} = Array{T}(24, Q)
+Base.Array{T}(Q::LogQuantArray{UInt32,N}) where {T,N} = Array{T}(32, Q)
+
+Base.Array(Q::LogQuantArray{UInt8,N}) where {N} = Array{Float32}(8, Q)
+Base.Array(Q::LogQuantArray{UInt16,N}) where {N} = Array{Float32}(16, Q)
+Base.Array(Q::LogQuantArray{UInt24,N}) where {N} = Array{Float32}(24, Q)
+Base.Array(Q::LogQuantArray{UInt32,N}) where {N} = Array{Float64}(32, Q)
+
+
+
+"""
+    Array{T}(L::Vector{LogQuantArray}) where {T}
+
+Undo the logarithmic quantisation independently along one dimension, and returns
 an array whereby the dimension always comes last. Hence, might be permuted compared
-to the uncompressed array."""
+to the uncompressed array.
+"""
 function Base.Array{T}(L::Vector{LogQuantArray}) where {T}
     N = ndims(L[1])
     n = length(L)

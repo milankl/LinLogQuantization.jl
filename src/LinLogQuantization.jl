@@ -1,5 +1,7 @@
 module LinLogQuantization
 
+    const Option{T} = Union{T,Nothing}
+
     export  LinQuantArray, LogQuantArray,
     LinQuant8Array, LinQuant16Array, LinQuant24Array, LinQuant32Array,
     LogQuant8Array, LogQuant16Array, LogQuant24Array, LogQuant32Array,
