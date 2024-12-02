@@ -211,7 +211,6 @@ end
             A2 = Array{Float32}(LinQuantArray{UInt32}(A, dims=4, extrema=ext))
             @test A2 == Array{Float32}(LinQuantArray{UInt32}(A2, dims=4, extrema=ext))
 
-
             A2 = Array{Float32}(LinQuantArray{UInt24}(A, dims=4, extrema=ext))
             @test A2 == Array{Float32}(LinQuantArray{UInt24}(A2, dims=4, extrema=ext))
             
@@ -222,7 +221,7 @@ end
             all(isapprox.(A2, Array{Float32}(LinQuantArray{UInt8}(A2, dims=4, extrema=ext)), atol=1e-1))
 
             A2 = Array{Float32}(LinQuantArray{Int32}(A, dims=4, extrema=ext))
-            @test A2 == Array{Float32}(LinQuantArray{Int32}(A2, 4; extrema=ext))
+            @test A2 == Array{Float32}(LinQuantArray{Int32}(A2, dims=4, extrema=ext))
 
             A2 = Array{Float32}(LinQuantArray{Int24}(A, dims=4, extrema=ext))
             @test A2 == Array{Float32}(LinQuantArray{Int24}(A2, dims=4, extrema=ext))
@@ -232,7 +231,6 @@ end
 
             A2 = Array{Float32}(LinQuantArray{Int8}(A, dims=4, extrema=ext))
             all(isapprox.(A2, Array{Float32}(LinQuantArray{Int8}(A2, dims=4, extrema=ext)), atol=1e-1))
-
         end
     end
 

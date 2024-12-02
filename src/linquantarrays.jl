@@ -117,7 +117,7 @@ function LinQuant24Array(A::AbstractArray{T,N}; dims::Option{Int}=nothing) where
     isnothing(dims) ? LinQuantization(UInt24,A) : LinQuantArray(UInt24,A; dims=dims)
 end
 
-function    LinQuant32Array(A::AbstractArray{T,N}; dims::Option{Int}=nothing) where {T,N}
+function LinQuant32Array(A::AbstractArray{T,N}; dims::Option{Int}=nothing) where {T,N}
     isnothing(dims) ? LinQuantization(UInt32,A) : LinQuantArray(UInt32,A; dims=dims)
 end
 
