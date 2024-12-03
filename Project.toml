@@ -1,7 +1,7 @@
 name = "LinLogQuantization"
 uuid = "44354dd6-1ce2-4e80-a0fb-98a3a2b05088"
 authors = ["Milan <milankloewer@gmx.de>, Pablo <valdunciel.pablo@gmail.com> and contributors"]
-version = "0.2.2"
+version = "0.3.0"
 
 [deps]
 BitIntegers = "c3b6d118-76ef-56ca-8cc7-ebb389d030a1"
