@@ -157,5 +157,5 @@ end
 #results_linear = benchmark_linear_quantization(10_000_000) 
 #print_lin_results(results_linear)   
 
-results_log = benchmark_log_quantization(10_000_000);
-print_log_results(results_log)
+#results_log = benchmark_log_quantization(10_000_000);
+#print_log_results(results_log)
