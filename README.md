@@ -273,8 +273,18 @@ Approximate throughputs in a MacBook Pro M2, 24GB RAM are (via `@benchmark`)
 | compression      |  800 MB/s |  800 MB/s |  100 MB/s |  700 MB/s |
 | decompression    | 2000 MB/s | 2000 MB/s | 2000 MB/s | 2000 MB/s |
 
-24-bit quantization is via `UInt24`  and `Int24` from the `BitIntegers` package,
-which introduces a drastic slow-down.
+
+Note: 24-bit quantization is via `UInt24`  and `Int24` from the `BitIntegers` package, which introduces a drastic slow-down. 
+
+### Overhead of `Base.extrema`
+Compression with custom extrema is much faster because calling `Base.extrema`, which is used for the default case, is avoided. `Base.extrema` iterates over the entire array to calculate the extrema, which adds an important overhead for large arrays:
+
+| Array size | Float64 | Float32 | Float16 |
+| ------------ | --------: | --------: | --------: |
+| 10^4 | 0.048287 ms | 0.048272 ms | 0.050938 ms |
+| 10^5 | 0.485512 ms | 0.491345 ms | 0.510508 ms |
+| 10^6 | 4.863599 ms | 4.864014 ms | 5.124977 ms |
+| 10^7 | 48.206972 ms | 48.153047 ms | 50.873535 ms |
 
 ## Installation
 
