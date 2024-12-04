@@ -15,6 +15,22 @@ function calculate_throughput(size_mb::Float64, time_ms::Float64)
 end
 
 """
+Benchmark the overhead of calling `Base.extrema`
+"""
+function benchmark_extrema_overhead()
+    results = Dict{String, Dict{String, Float64}}()
+    for n in [10^4, 10^5, 10^6, 10^7]
+        results[string(n)] = Dict{String, Float64}()
+        for T in [Float64, Float32, Float16]
+            A = rand(T, n)
+            b_comp = @benchmark Base.extrema($A)
+            results[string(n)][string(T)] = mean(b_comp.times) / 1e6
+        end
+    end
+    return results
+end
+
+"""
 Benchmark linear quantization for a given array size
 """
 function benchmark_linear_quantization(n::Int)
@@ -98,6 +114,17 @@ function benchmark_log_quantization(n::Int)
 end
 
 """
+Print markdown table for extrema overhead results
+"""
+function print_extrema_overhead(results)
+    println("\n| Array size | Float64 | Float32 | Float16 |")
+    println("| ------------ | --------: | --------: | --------: |")
+    for n in [10^4, 10^5, 10^6, 10^7]
+        @printf("| 10^%d | %f ms | %f ms | %f ms |\n", Int(log10(n)), results[string(n)]["Float64"], results[string(n)]["Float32"], results[string(n)]["Float16"])
+    end
+end
+
+"""
 Print markdown table for linear quantization results
 """ 
 function print_lin_results(results)
@@ -157,5 +184,8 @@ end
 #results_linear = benchmark_linear_quantization(10_000_000) 
 #print_lin_results(results_linear)   
 
-results_log = benchmark_log_quantization(10_000_000);
-print_log_results(results_log)
+#results_log = benchmark_log_quantization(10_000_000);
+#print_log_results(results_log)
+
+results_extrema = benchmark_extrema_overhead()
+print_extrema_overhead(results_extrema)
