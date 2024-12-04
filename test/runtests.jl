@@ -178,29 +178,29 @@ end
 @testset "LinQuant along dimension" begin
     @testset "Default extrema" begin
         A = rand(Float32,10,20,30,40)
-        Q = LinQuant32Array(A,4)
+        Q = LinQuant32Array(A, dims=4)
         @test A ≈ Array{Float32}(Q)
 
-        Q = LinQuant24Array(A,4)
+        Q = LinQuant24Array(A, dims=4)
         @test A ≈ Array{Float32}(Q)
 
-        Q = LinQuant16Array(A,4)
+        Q = LinQuant16Array(A, dims=4)
         @test A ≈ Array{Float32}(Q)
 
-        Q = LinQuant8Array(A,4)
+        Q = LinQuant8Array(A, dims=4)
         @test all(isapprox.(A,Array{Float32}(Q),atol=1e-1))
 
         A = rand(Float32,10,20,30,40)
-        Q = LinQuantArray{Int32}(A,4)
+        Q = LinQuantArray{Int32}(A, dims=4)
         @test A ≈ Array{Float32}(Q)
 
-        Q = LinQuantArray{Int24}(A,4)
+        Q = LinQuantArray{Int24}(A, dims=4)
         @test A ≈ Array{Float32}(Q)
 
-        Q = LinQuantArray{Int16}(A,4)
+        Q = LinQuantArray{Int16}(A, dims=4)
         @test A ≈ Array{Float32}(Q)
 
-        Q = LinQuantArray{Int8}(A,4)
+        Q = LinQuantArray{Int8}(A, dims=4)
         @test all(isapprox.(A,Array{Float32}(Q),atol=1e-1))
     end 
 
@@ -208,30 +208,29 @@ end
         for ext in [(0.1, 0.6), (0.22, 0.75), (0.3, 0.5)]
             A = rand(Float32,10,20,30,40)
 
-            A2 = Array{Float32}(LinQuantArray{UInt32}(A, 4; extrema=ext))
-            @test A2 == Array{Float32}(LinQuantArray{UInt32}(A2, 4; extrema=ext))
+            A2 = Array{Float32}(LinQuantArray{UInt32}(A, dims=4, extrema=ext))
+            @test A2 == Array{Float32}(LinQuantArray{UInt32}(A2, dims=4, extrema=ext))
 
-            A2 = Array{Float32}(LinQuantArray{UInt24}(A, 4; extrema=ext))
-            @test A2 == Array{Float32}(LinQuantArray{UInt24}(A2, 4; extrema=ext))
+            A2 = Array{Float32}(LinQuantArray{UInt24}(A, dims=4, extrema=ext))
+            @test A2 == Array{Float32}(LinQuantArray{UInt24}(A2, dims=4, extrema=ext))
             
-            A2 = Array{Float32}(LinQuantArray{UInt16}(A, 4; extrema=ext))
-            @test A2 == Array{Float32}(LinQuantArray{UInt16}(A2, 4; extrema=ext))
+            A2 = Array{Float32}(LinQuantArray{UInt16}(A, dims=4, extrema=ext))
+            @test A2 == Array{Float32}(LinQuantArray{UInt16}(A2, dims=4, extrema=ext))
 
-            A2 = Array{Float32}(LinQuantArray{UInt8}(A, 4; extrema=ext))
-            all(isapprox.(A2, Array{Float32}(LinQuantArray{UInt8}(A2, 4; extrema=ext)), atol=1e-1))
+            A2 = Array{Float32}(LinQuantArray{UInt8}(A, dims=4, extrema=ext))
+            all(isapprox.(A2, Array{Float32}(LinQuantArray{UInt8}(A2, dims=4, extrema=ext)), atol=1e-1))
 
-            A2 = Array{Float32}(LinQuantArray{Int32}(A, 4; extrema=ext))
-            @test A2 == Array{Float32}(LinQuantArray{Int32}(A2, 4; extrema=ext))
+            A2 = Array{Float32}(LinQuantArray{Int32}(A, dims=4, extrema=ext))
+            @test A2 == Array{Float32}(LinQuantArray{Int32}(A2, dims=4, extrema=ext))
 
-            A2 = Array{Float32}(LinQuantArray{Int24}(A, 4; extrema=ext))
-            @test A2 == Array{Float32}(LinQuantArray{Int24}(A2, 4; extrema=ext))
+            A2 = Array{Float32}(LinQuantArray{Int24}(A, dims=4, extrema=ext))
+            @test A2 == Array{Float32}(LinQuantArray{Int24}(A2, dims=4, extrema=ext))
             
-            A2 = Array{Float32}(LinQuantArray{Int16}(A, 4; extrema=ext))
-            @test A2 == Array{Float32}(LinQuantArray{Int16}(A2, 4; extrema=ext))
+            A2 = Array{Float32}(LinQuantArray{Int16}(A, dims=4, extrema=ext))
+            @test A2 == Array{Float32}(LinQuantArray{Int16}(A2, dims=4, extrema=ext))
 
-            A2 = Array{Float32}(LinQuantArray{Int8}(A, 4; extrema=ext))
-            all(isapprox.(A2, Array{Float32}(LinQuantArray{Int8}(A2, 4; extrema=ext)), atol=1e-1))
-
+            A2 = Array{Float32}(LinQuantArray{Int8}(A, dims=4, extrema=ext))
+            all(isapprox.(A2, Array{Float32}(LinQuantArray{Int8}(A2, dims=4, extrema=ext)), atol=1e-1))
         end
     end
 
@@ -242,30 +241,31 @@ end
         @test maximum(A) > 0
 
         for T in (Int32, Int24, Int16)
-            Q = LinQuantArray{T}(A, 4)
+            Q = LinQuantArray{T}(A, dims=4)
             A2 = Array{Float32}(Q)
             @test A ≈ Array{Float32}(Q)
-            @test A2 == Array{Float32}(LinQuantArray{T}(A2, 4))
+            @test A2 == Array{Float32}(LinQuantArray{T}(A2, dims=4))
         end
 
         # higher tolerance for Int8
-        Q = LinQuantArray{Int8}(A, 4)
+        Q = LinQuantArray{Int8}(A, dims=4)
         @test all(isapprox.(A, Array{Float32}(Q), atol=1e-1))
     end
 end
+
 
 @testset "LogQuant along dimension" begin
     A = rand(Float32,10,20,30,40)
 
     for T in (UInt32, UInt24, UInt16)
-        Q = LogQuantArray{T}(A, 4)
+        Q = LogQuantArray{T}(A, dims=4)
         A2 = Array{Float32}(Q)
         @test A ≈ Array{Float32}(Q)
-        @test A2 == Array{Float32}(LogQuantArray{T}(A2, 4))
+        @test A2 == Array{Float32}(LogQuantArray{T}(A2, dims=4))
     end
 
     # higher tolerance for UInt8
-    Q = LogQuantArray{UInt8}(A,4)
+    Q = LogQuant8Array(A, dims=4)
     @test all(isapprox.(A,Array{Float32}(Q),atol=1e-1))
 end
 
@@ -380,3 +380,4 @@ end
         end
     end
 end
+
