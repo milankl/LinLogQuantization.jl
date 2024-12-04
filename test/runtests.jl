@@ -211,7 +211,6 @@ end
             A2 = Array{Float32}(LinQuantArray{UInt32}(A, 4; extrema=ext))
             @test A2 == Array{Float32}(LinQuantArray{UInt32}(A2, 4; extrema=ext))
 
-
             A2 = Array{Float32}(LinQuantArray{UInt24}(A, 4; extrema=ext))
             @test A2 == Array{Float32}(LinQuantArray{UInt24}(A2, 4; extrema=ext))
             
@@ -258,14 +257,15 @@ end
 @testset "LogQuant along dimension" begin
     A = rand(Float32,10,20,30,40)
 
-    for T in (Int32, Int24, Int16, Int8)
+    for T in (UInt32, UInt24, UInt16)
         Q = LogQuantArray{T}(A, 4)
         A2 = Array{Float32}(Q)
         @test A ≈ Array{Float32}(Q)
         @test A2 == Array{Float32}(LogQuantArray{T}(A2, 4))
     end
 
-    Q = LogQuant8Array(A,4)
+    # higher tolerance for UInt8
+    Q = LogQuantArray{UInt8}(A,4)
     @test all(isapprox.(A,Array{Float32}(Q),atol=1e-1))
 end
 
